@@ -23,3 +23,4 @@ Our goal is to create a trustless ecosystem where machine learning models can be
 - IPFS for model storage (off-chain)
 
 contract Address: 0xdb321841129f38e1410ab30d8272ae1067e40c79
+![Screenshot 2025-04-23 143139](https://github.com/user-attachments/assets/2e258571-771d-4baf-a889-1dfae55f9498)
