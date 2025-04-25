@@ -14,13 +14,20 @@ contract MLModelMarketplace {
     uint public modelCounter;
     mapping(uint => Model) public models;
 
-    // Track which users have purchased which models
     mapping(uint => mapping(address => bool)) public hasPurchased;
 
     event ModelListed(uint modelId, address creator, uint price);
     event ModelPurchased(uint modelId, address buyer);
     event ModelUnlisted(uint modelId);
     event PriceUpdated(uint modelId, uint newPrice);
+    event ModelRelisted(uint modelId);
+    event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
+    event ContractDestroyed(address by);
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner");
+        _;
+    }
 
     constructor() {
         owner = msg.sender;
@@ -84,7 +91,74 @@ contract MLModelMarketplace {
         emit PriceUpdated(_modelId, _newPrice);
     }
 
+    function relistModel(uint _modelId, uint _newPrice) public {
+        Model storage model = models[_modelId];
+        require(model.creator == msg.sender, "Only creator can relist");
+        require(!model.isListed, "Already listed");
+        require(_newPrice > 0, "Price must be greater than 0");
+
+        model.price = _newPrice;
+        model.isListed = true;
+
+        emit ModelRelisted(_modelId);
+    }
+
+    function getAllListedModels() public view returns (Model[] memory) {
+        uint count = 0;
+        for (uint i = 1; i <= modelCounter; i++) {
+            if (models[i].isListed) {
+                count++;
+            }
+        }
+
+        Model[] memory listedModels = new Model[](count);
+        uint index = 0;
+        for (uint i = 1; i <= modelCounter; i++) {
+            if (models[i].isListed) {
+                listedModels[index] = models[i];
+                index++;
+            }
+        }
+
+        return listedModels;
+    }
+
+    function getModelsByCreator(address _creator) public view returns (Model[] memory) {
+        uint count = 0;
+        for (uint i = 1; i <= modelCounter; i++) {
+            if (models[i].creator == _creator) {
+                count++;
+            }
+        }
+
+        Model[] memory creatorModels = new Model[](count);
+        uint index = 0;
+        for (uint i = 1; i <= modelCounter; i++) {
+            if (models[i].creator == _creator) {
+                creatorModels[index] = models[i];
+                index++;
+            }
+        }
+
+        return creatorModels;
+    }
+
     function isBuyer(uint _modelId, address _user) public view returns (bool) {
         return hasPurchased[_modelId][_user];
+    }
+
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0), "Invalid address");
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+
+    function withdraw() public onlyOwner {
+        payable(owner).transfer(address(this).balance);
+    }
+
+    function destroyContract() public onlyOwner {
+        emit ContractDestroyed(msg.sender);
+        selfdestruct(payable(owner));
     }
 }
