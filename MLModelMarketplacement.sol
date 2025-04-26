@@ -161,4 +161,34 @@ contract MLModelMarketplace {
         emit ContractDestroyed(msg.sender);
         selfdestruct(payable(owner));
     }
+function getPurchasedModels(address _user) public view returns (Model[] memory) {
+    uint count = 0;
+    for (uint i = 1; i <= modelCounter; i++) {
+        if (hasPurchased[i][_user]) {
+            count++;
+        }
+    }
+
+    Model[] memory purchasedModels = new Model[](count);
+    uint index = 0;
+    for (uint i = 1; i <= modelCounter; i++) {
+        if (hasPurchased[i][_user]) {
+            purchasedModels[index] = models[i];
+            index++;
+        }
+    }
+
+    return purchasedModels;
 }
+function getModelCountByCreator(address _creator) public view returns (uint) {
+    uint count = 0;
+    for (uint i = 1; i <= modelCounter; i++) {
+        if (models[i].creator == _creator) {
+            count++;
+        }
+    }
+    return count;
+}
+
+
+
